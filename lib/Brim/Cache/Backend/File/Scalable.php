@@ -31,7 +31,7 @@ class Brim_Cache_Backend_File_Scalable extends Zend_Cache_Backend_File
     );
 
     /**
-     * @var null|Brim_PageCache_Model_Backend_Database
+     * @var null|Brim_Cache_Backend_Database
      */
     protected $_dbBackend = null;
 
