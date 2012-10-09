@@ -50,13 +50,6 @@ class Brim_Cache_Backend_File_Scalable extends Zend_Cache_Backend_File
         }
 
         parent::__construct($options);
-
-        $options                    = array();
-        $options['adapter_callback']= array($this, 'getDbAdapter');
-        $options['data_table']      = Mage::getSingleton('core/resource')->getTableName('core/cache');
-        $options['tags_table']      = Mage::getSingleton('core/resource')->getTableName('core/cache_tag');
-
-        $this->_dbBackend           = new Brim_Cache_Backend_Database($options);
     }
 
     /**
@@ -71,7 +64,7 @@ class Brim_Cache_Backend_File_Scalable extends Zend_Cache_Backend_File
         parent::save($data, $id, $tags, $specificLifetime);
 
         // Save metadata and tags to DB for faster clean operations
-        $this->_dbBackend->save(null, $id, $tags, $specificLifetime);
+        $this->_getDbBackend()->save(null, $id, $tags, $specificLifetime);
     }
 
     /**
@@ -80,7 +73,7 @@ class Brim_Cache_Backend_File_Scalable extends Zend_Cache_Backend_File
      */
     public function remove($id) {
         parent::remove($id);
-        $this->_dbBackend->remove($id);
+        $this->_getDbBackend()->remove($id);
     }
 
     /**
@@ -97,7 +90,7 @@ class Brim_Cache_Backend_File_Scalable extends Zend_Cache_Backend_File
      */
     public function clean($mode = Zend_Cache::CLEANING_MODE_ALL, $tags = array()) {
         parent::clean($mode, $tags);
-        $this->_dbBackend->clean($mode, $tags);
+        $this->_getDbBackend()->clean($mode, $tags);
     }
 
     /**
@@ -137,25 +130,25 @@ class Brim_Cache_Backend_File_Scalable extends Zend_Cache_Backend_File
 
                 break;
             case Zend_Cache::CLEANING_MODE_OLD:
-                $matchingIds = $this->_dbBackend->getExpiredIds();
+                $matchingIds = $this->_getDbBackend()->getExpiredIds();
                 foreach($matchingIds as $id) {
                     $result = $this->remove($id) && $result;
                 }
                 break;
             case Zend_Cache::CLEANING_MODE_MATCHING_TAG:
-                $matchingIds = $this->_dbBackend->getIdsMatchingTags($tags);
+                $matchingIds = $this->_getDbBackend()->getIdsMatchingTags($tags);
                 foreach($matchingIds as $id) {
                     $result = $this->remove($id) && $result;
                 }
                 break;
             case Zend_Cache::CLEANING_MODE_NOT_MATCHING_TAG:
-                $matchingIds = $this->_dbBackend->getIdsNotMatchingTags($tags);
+                $matchingIds = $this->_getDbBackend()->getIdsNotMatchingTags($tags);
                 foreach($matchingIds as $id) {
                     $result = $this->remove($id) && $result;
                 }
                 break;
             case Zend_Cache::CLEANING_MODE_MATCHING_ANY_TAG:
-                $matchingIds = $this->_dbBackend->getIdsMatchingAnyTags($tags);
+                $matchingIds = $this->_getDbBackend()->getIdsMatchingAnyTags($tags);
                 foreach($matchingIds as $id) {
                     $result = $this->remove($id) && $result;
                 }
@@ -180,19 +173,19 @@ class Brim_Cache_Backend_File_Scalable extends Zend_Cache_Backend_File
         $result = null;
         switch ($mode) {
             case 'ids':
-                $result = $this->_dbBackend->getIds();
+                $result = $this->_getDbBackend()->getIds();
                 break;
             case 'tags':
-                $result = $this->_dbBackend->getTags();
+                $result = $this->_getDbBackend()->getTags();
                 break;
             case 'matching':
-                $result = $this->_dbBackend->getIdsMatchingTags($tags);
+                $result = $this->_getDbBackend()->getIdsMatchingTags($tags);
                 break;
             case 'notMatching':
-                $result = $this->_dbBackend->getIdsNotMatchingTags($tags);
+                $result = $this->_getDbBackend()->getIdsNotMatchingTags($tags);
                 break;
             case 'matchingAny':
-                $result = $this->_dbBackend->getIdsMatchingAnyTags($tags);
+                $result = $this->_getDbBackend()->getIdsMatchingAnyTags($tags);
                 break;
             default:
                 Zend_Cache::throwException('Invalid mode for _get() method');
@@ -200,5 +193,20 @@ class Brim_Cache_Backend_File_Scalable extends Zend_Cache_Backend_File
         }
 
         return array_unique($result);
+    }
+
+    /**
+     * @return Brim_Cache_Backend_Database|null
+     */
+    protected function _getDbBackend() {
+        if ($this->_dbBackend == null) {
+            $options                    = array();
+            $options['adapter_callback']= array($this, 'getDbAdapter');
+            $options['data_table']      = Mage::getSingleton('core/resource')->getTableName('core/cache');
+            $options['tags_table']      = Mage::getSingleton('core/resource')->getTableName('core/cache_tag');
+
+            $this->_dbBackend           = new Brim_Cache_Backend_Database($options);
+        }
+        return $this->_dbBackend;
     }
 }
