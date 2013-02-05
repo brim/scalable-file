@@ -61,10 +61,12 @@ class Brim_Cache_Backend_File_Scalable extends Zend_Cache_Backend_File
      */
     public function save($data, $id, $tags = array(), $specificLifetime = false) {
 
-        parent::save($data, $id, $tags, $specificLifetime);
+        $fileResult = parent::save($data, $id, $tags, $specificLifetime);
 
         // Save metadata and tags to DB for faster clean operations
-        $this->_getDbBackend()->save(null, $id, $tags, $specificLifetime);
+        $dbResult   = $this->_getDbBackend()->save(null, $id, $tags, $specificLifetime);
+
+        return $fileResult && $dbResult;
     }
 
     /**
@@ -72,8 +74,10 @@ class Brim_Cache_Backend_File_Scalable extends Zend_Cache_Backend_File
      * @return bool|void
      */
     public function remove($id) {
-        parent::remove($id);
-        $this->_getDbBackend()->remove($id);
+        $fileResult = parent::remove($id);
+        $dbResult   = $this->_getDbBackend()->remove($id);
+
+        return $fileResult && $dbResult;
     }
 
     /**
@@ -89,8 +93,10 @@ class Brim_Cache_Backend_File_Scalable extends Zend_Cache_Backend_File
      * @return bool|void
      */
     public function clean($mode = Zend_Cache::CLEANING_MODE_ALL, $tags = array()) {
-        parent::clean($mode, $tags);
-        $this->_getDbBackend()->clean($mode, $tags);
+        $fileResult = parent::clean($mode, $tags);
+        $dbResult   = $this->_getDbBackend()->clean($mode, $tags);
+
+        return $fileResult && $dbResult;
     }
 
     /**
