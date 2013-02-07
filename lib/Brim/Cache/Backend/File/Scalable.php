@@ -63,8 +63,15 @@ class Brim_Cache_Backend_File_Scalable extends Zend_Cache_Backend_File
 
         $fileResult = parent::save($data, $id, $tags, $specificLifetime);
 
-        // Save metadata and tags to DB for faster clean operations
-        $dbResult   = $this->_getDbBackend()->save(null, $id, $tags, $specificLifetime);
+        try {
+            // Save metadata and tags to DB for faster clean operations
+            $dbResult   = $this->_getDbBackend()->save(null, $id, $tags, $specificLifetime);
+        } catch (Zend_Db_Statement_Exception $e) {
+            // Remove record from the file cache if the save failed.
+            // Exception is known to be thrown is a model lock tables and table metadata needs to be cached.
+            $dbResult = false;
+            parent::remove($id);
+        }
 
         return $fileResult && $dbResult;
     }
