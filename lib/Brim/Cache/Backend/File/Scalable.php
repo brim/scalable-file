@@ -35,6 +35,8 @@ class Brim_Cache_Backend_File_Scalable extends Zend_Cache_Backend_File
      */
     protected $_dbBackend = null;
 
+    protected $_dbOptions = array();
+
     /**
      * @param array $options
      */
@@ -47,6 +49,13 @@ class Brim_Cache_Backend_File_Scalable extends Zend_Cache_Backend_File
 
         if (!isset($options['cache_dir'])) {
             $options['cache_dir'] = Mage::getBaseDir('cache');
+        }
+
+        if (isset($options['database'])) {
+            foreach ($options['database'] as $key => $value) {
+                $this->_dbOptions[$key] = $value;
+            }
+            unset($options['database']);
         }
 
         parent::__construct($options);
@@ -218,11 +227,17 @@ class Brim_Cache_Backend_File_Scalable extends Zend_Cache_Backend_File
      */
     protected function _getDbBackend() {
         if ($this->_dbBackend == null) {
-            $options                    = array();
+            $resource                   = Mage::getSingleton('core/resource');
+            $options                    = $this->_dbOptions;
             $options['adapter_callback']= array($this, 'getDbAdapter');
-            $options['data_table']      = Mage::getSingleton('core/resource')->getTableName('core/cache');
-            $options['tags_table']      = Mage::getSingleton('core/resource')->getTableName('core/cache_tag');
 
+            if (empty($options['data_table'])) {
+                $options['data_table']  = $resource->getTableName('core/cache');
+            }
+
+            if (empty($options['tags_table'])) {
+                $options['tags_table']  = $resource->getTableName('core/cache_tag');
+            }
             $this->_dbBackend           = new Brim_Cache_Backend_Database($options);
         }
         return $this->_dbBackend;
