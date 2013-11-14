@@ -35,4 +35,23 @@ class Brim_Cache_Backend_Database extends Varien_Cache_Backend_Database {
 
         return $this->_getAdapter()->fetchCol($select);
     }
+
+    /**
+     * Removes orphaned tags from the tags database table when cleaning old objects.
+     *
+     * @param string $mode
+     * @param array $tags
+     * @return bool
+     */
+    public function clean($mode = Zend_Cache::CLEANING_MODE_ALL, $tags = array())
+    {
+        $result = parent::clean();
+
+        if ($mode ==  Zend_Cache::CLEANING_MODE_OLD) {
+            $adapter = $this->_getAdapter();
+            $adapter->delete($this->_getTagsTable(), "cache_id NOT IN (SELECT id FROM {$this->_getDataTable()})");
+        }
+
+        return $result;
+    }
 }
