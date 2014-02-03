@@ -45,7 +45,7 @@ class Brim_Cache_Backend_Database extends Varien_Cache_Backend_Database {
      */
     public function clean($mode = Zend_Cache::CLEANING_MODE_ALL, $tags = array())
     {
-        $result = parent::clean();
+        $result = parent::clean($mode, $tags);
 
         if ($mode ==  Zend_Cache::CLEANING_MODE_OLD) {
             $adapter = $this->_getAdapter();
